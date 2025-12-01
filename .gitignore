@@ -1,0 +1,54 @@
+# ---- GLOBAL ----
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+
+# ---- PYTHON / DJANGO BACKEND ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+.env
+.env.*
+*.env
+*.db
+
+# Django compiled/static
+static/
+staticfiles/
+media/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# VS Code
+.vscode/
+
+# ---- NODE / VITE FRONTEND ----
+node_modules/
+dist/
+.cache/
+*.local
+
+# Vite environment files
+frontend/.env
+frontend/.env.*
+*.vite.config.timestamp-*
+
+# Build artifacts
+dist/
+build/
+
+# ---- SYSTEM ----
+*.orig
+*.bak
+*.tmp
+*.temp
