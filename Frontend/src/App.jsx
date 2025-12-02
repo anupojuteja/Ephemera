@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import Login from "./Login";
 import Chat from "./Chat";
+import Header from "./Header";
 import api from "./api";
 
 /*
   Simple flow:
-  - Login
-  - Minor demo: start chat with a hard-coded user (or choose first user from friends)
-  For demo, you can create users via Django admin or register then use another browser/incognito to create another account.
+  - Login / register via backend
+  - Enter other user's numeric ID to start a chat
 */
 
 export default function App() {
   const [me, setMe] = useState(null);
   const [other, setOther] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadMe() {
@@ -30,46 +31,61 @@ export default function App() {
   }, []);
 
   if (!me) {
-    return <Login onLogin={(u) => setMe(u)} />;
+    return (
+      <>
+        <Header />
+        <Login onLogin={(u)=>setMe(u)} />
+      </>
+    );
   }
 
-  // Demo: show simple UI to pick another user id to chat with.
-  if (!other) {
+    if (!other) {
     return (
-      <div style={{ padding: 20 }}>
-        <h2>Welcome, {me.username}</h2>
-        <p>Start a chat — for demo enter another user's ID (create extra users via /admin or register endpoint)</p>
-        <StartChatForm onStart={(u) => setOther(u)} me={me} />
+      <div className="min-h-screen flex flex-col bg-[transparent]">
+        <Header me={me} onLogout={() => { setMe(null); setOther(null); }} />
+
+        {/* Centered content area - keeps background full but card centered */}
+        <main className="flex-1 flex items-start justify-center pt-28 pb-12 px-4">
+          <div className="w-full max-w-2xl bg-[rgba(255,255,255,0.02)] p-8 rounded-2xl shadow-neon border border-[rgba(255,255,255,0.03)]">
+            <h1 className="text-4xl font-bold mb-4">
+              Welcome, <span style={{background: "linear-gradient(90deg,#F58529,#DD2A7B)", WebkitBackgroundClip: "text", color: "transparent"}}>{me.username}</span>
+            </h1>
+
+            <p className="muted mb-4">Start a chat — for demo enter another user's numeric ID (create users via admin or register endpoint)</p>
+
+            <div className="flex items-center gap-3 mb-3">
+              <input id="otherId" placeholder="other user id" className="p-3 rounded-lg flex-1 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)]" />
+              <button onClick={async ()=>{
+                const v = document.getElementById("otherId").value.trim();
+                setError("");
+                if (!v) { setError("enter user id"); return; }
+                try {
+                  const room = await api.roomWith(Number(v));
+                  // to render Chat we need other user's minimal info
+                  setOther({ id: Number(v), username: `user-${v}`});
+                } catch (e) {
+                  console.error(e);
+                  setError("Cannot start chat — check user id or login");
+                }
+              }} className="px-4 py-2 rounded-xl text-white" style={{background: "linear-gradient(90deg,#DD2A7B,#8134AF)"}}>Start Chat</button>
+            </div>
+
+            {error && <div className="text-red-400 mb-3">{error}</div>}
+
+            <div className="muted text-sm">Tip: create users via backend: <code>/api/auth/register/</code> or Django admin.</div>
+          </div>
+        </main>
       </div>
     );
   }
 
-  return <Chat me={me} otherUser={other} />;
-}
-
-function StartChatForm({ onStart, me }) {
-  const [otherId, setOtherId] = useState("");
-  const [err, setErr] = useState("");
-  async function go() {
-    setErr("");
-    try {
-      // fetch user via a trivial trick: hit room-with to check user exists
-      // but we'll try to create the room to validate existence
-      const room = await api.roomWith(Number(otherId));
-      // API response does not return full other user, so we craft dummy object
-      const other = { id: Number(otherId), username: `user-${otherId}` };
-      onStart(other);
-    } catch (e) {
-      setErr("Cannot start chat — check user id or login");
-    }
-  }
   return (
-    <div>
-      <input placeholder="other user id" value={otherId} onChange={(e) => setOtherId(e.target.value)} />
-      <button onClick={go}>Start Chat</button>
-      {err && <div style={{ color: "red" }}>{err}</div>}
-      <div style={{ marginTop: 10 }}>
-        Tip: create users via backend: <code>POST /api/auth/register/</code> or Django admin.
+    <div className="min-h-screen flex flex-col">
+      <Header me={me} onLogout={() => { setMe(null); setOther(null); }} />
+      <div className="flex-1 flex">
+        <div className="w-full max-w-4xl mx-auto flex gap-6 p-6">
+          <Chat me={me} otherUser={other} />
+        </div>
       </div>
     </div>
   );
