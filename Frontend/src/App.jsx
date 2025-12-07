@@ -3,13 +3,14 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Chat from "./Chat";
 import RightPanel from "./RightPanel";
+import Login from "./Login";           // <- static import (fixes require() error)
 import api from "./api";
 import "./index.css";
 
 /*
   App: top header + 3-column layout
   - Sidebar: chat list
-  - Chat: center message view
+  - Chat: center messages
   - RightPanel: info, shared files
 */
 
@@ -20,15 +21,16 @@ export default function App() {
 
   useEffect(() => {
     async function loadMe() {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        try {
+      // guard storage access — api.me() uses safe getters
+      try {
+        const token = (typeof window !== "undefined" && window.localStorage) ? localStorage.getItem("access_token") : null;
+        if (token) {
           const user = await api.me();
           setMe(user);
-        } catch (e) {
-          // not logged in
-          setMe(null);
         }
+      } catch (e) {
+        // not logged in or storage blocked
+        setMe(null);
       }
     }
     loadMe();
@@ -42,7 +44,6 @@ export default function App() {
 
   // If not logged in show the login (existing Login component)
   if (!me) {
-    const Login = require("./Login").default;
     return (
       <>
         <Header />
@@ -53,7 +54,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen min-w-screen bg-gradient-to-b from-[#0b0710] to-[#0f0811] text-white">
-      <Header me={me} onLogout={() => { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); setMe(null); }} />
+      <Header me={me} onLogout={() => { try { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); } catch(e){}; setMe(null); }} />
 
       <div className="max-w-screen-xl mx-auto px-6 py-6">
         <div className="rounded-2xl bg-[rgba(255,255,255,0.02)] overflow-hidden shadow-neon border border-[rgba(255,255,255,0.04)]">
