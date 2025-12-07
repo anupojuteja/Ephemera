@@ -1,75 +1,136 @@
+// frontend/src/Sidebar.jsx
 import React, { useEffect, useState } from "react";
 import api from "./api";
 
 /*
- Sidebar:
- - search input
- - list of rooms/friends (we show simple list using API)
- - clicking a row calls onOpenRoom(room, otherUser)
+ Sidebar: uses api.getFriends() as the primary source.
+ Normalizes the returned objects for the UI.
 */
 
-export default function Sidebar({ me, onOpenRoom }) {
-  const [list, setList] = useState([]);
+export default function Sidebar({ me, onOpen }) {
+  const [items, setItems] = useState([]); // normalized items
   const [q, setQ] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadList();
-    // basic polling to refresh list
-    const id = setInterval(loadList, 5000);
+    const id = setInterval(loadList, 10000); // refresh frequently but not too often
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadList() {
+    setLoading(true);
     try {
-      // For now fetch friend requests or show users (minimal)
-      const resp = await api.listFriends(); // expects /api/friends/ - adapt if different
-      // If API returns friendRequests, map to list items; else fallback to users
-      if (Array.isArray(resp)) setList(resp);
+      // Primary: use friends endpoint (works on your backend)
+      const friends = await api.getFriends();
+      if (Array.isArray(friends) && friends.length > 0) {
+        const normalized = friends.map(f => {
+          // friend could be simple user object or friend-request object.
+          // try several common shapes:
+          const user = f.user || f.to_user || f.from_user || f; // adapt to your payload
+          return {
+            id: user.id,
+            username: user.username || user.name || user.email || `user-${user.id}`,
+            avatar_url: user.avatar_url || null,
+            last_message: f.last_message || null,   // if backend provides last_message on friend
+            unread_count: f.unread_count || f.unread || 0
+          };
+        });
+        setItems(normalized);
+        setLoading(false);
+        return;
+      }
     } catch (e) {
-      // fallback: show a few placeholder entries if API not present
-      setList((prev) => prev.length ? prev : [
-        { id: 2, username: "teja" },
-        { id: 3, username: "tez" },
-        { id: 4, username: "jk" }
-      ]);
+      console.warn("getFriends failed", e);
+    }
+
+    // fallback: try rooms or users (less likely with your current API)
+    try {
+      const rooms = await api.getRooms();
+      if (Array.isArray(rooms)) {
+        const normalized = rooms.map(r => {
+          const other = r.other_user || (r.participants && r.participants.find(p => p.id !== me?.id)) || r.other || {};
+          return {
+            id: r.id,
+            username: other.username || other.name || `user-${other.id || r.id}`,
+            avatar_url: other.avatar_url || null,
+            last_message: r.last_message || null,
+            unread_count: r.unread_count || 0
+          };
+        });
+        setItems(normalized);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      const users = await api.getUsers();
+      const normalizedUsers = (Array.isArray(users) ? users : []).map(u=>({
+        id: u.id, username: u.username || u.name || `user-${u.id}`, avatar_url: u.avatar_url || null, last_message: null, unread_count: 0
+      }));
+      setItems(normalizedUsers);
+    } catch (e) {
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
   }
 
+  const filtered = Array.isArray(items) ? items.filter(it => it.username && it.username.toLowerCase().includes(q.toLowerCase())) : [];
+
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-4">
-        <div className="relative">
-          <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Search..." className="w-full p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)]" />
-          <div className="absolute right-3 top-3 text-muted">🔍</div>
-        </div>
+      <div className="px-4 py-3 border-b">
+        <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Search or start new chat" className="w-full p-2 rounded-md border text-sm" />
       </div>
 
       <div className="flex-1 overflow-auto">
-        <ul className="divide-y divide-[rgba(255,255,255,0.02)]">
-          {list.map((u) => (
-            <li key={u.id} className="px-4 py-3 hover:bg-[rgba(255,255,255,0.01)] cursor-pointer flex items-center gap-3"
-                onClick={async ()=>{
-                  try {
-                    const room = await api.roomWith(u.id);
-                    onOpenRoom(room, { id: u.id, username: u.username || `user-${u.id}` });
-                  } catch (e) {
-                    // fallback: open a fake room object
-                    onOpenRoom({ id: `r-${u.id}`}, { id: u.id, username: u.username || `user-${u.id}`});
-                  }
-                }}>
-              <div className="avatar-ring"><img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=515BD4&color=fff`} alt="" className="w-12 h-12 rounded-full" /></div>
-              <div className="flex-1">
-                <div className="font-semibold">{u.username}</div>
-                <div className="muted small">Hey there — say hello!</div>
-              </div>
-              <div className="text-xs muted">13:02</div>
-            </li>
-          ))}
-        </ul>
+        {loading ? (
+          <div className="p-4 text-sm text-slate-500">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-4 text-sm text-slate-500">No contacts found</div>
+        ) : (
+          <ul>
+            {filtered.map(item => (
+              <li key={item.id} className="px-3 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3"
+                  onClick={async ()=>{
+                    // when clicking a friend, create/open a room via roomWith
+                    try {
+                      const room = await api.roomWith(item.id);
+                      onOpen(room, { id: item.id, username: item.username });
+                    } catch (e) {
+                      onOpen({ id: `tmp-${item.id}`}, { id: item.id, username: item.username });
+                    }
+                  }}>
+                <div className="w-12 h-12 rounded-full bg-slate-200 flex-none flex items-center justify-center text-slate-700 font-semibold">
+                  {item.avatar_url ? <img src={item.avatar_url} alt="a" className="w-12 h-12 rounded-full object-cover" /> : (item.username||"U").slice(0,1).toUpperCase()}
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <div className="font-medium">{item.username}</div>
+                    <div className="text-xs text-slate-400">{item.last_message?.created_at ? new Date(item.last_message.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ""}</div>
+                  </div>
+                  <div className="text-sm text-slate-500 truncate">
+                    {item.last_message?.text || "Say hello!"}
+                  </div>
+                </div>
+
+                {item.unread_count > 0 && (
+                  <div className="ml-2">
+                    <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full">{item.unread_count}</span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      <div className="px-4 py-3 border-t border-[rgba(255,255,255,0.02)]">
-        <button className="w-full py-2 rounded-lg text-sm" style={{background: "linear-gradient(90deg,#DD2A7B,#8134AF)"}}>New Chat</button>
+      <div className="p-4 border-t">
+        <button onClick={loadList} className="w-full bg-emerald-600 text-white py-2 rounded-md text-sm">Refresh</button>
       </div>
     </div>
   );

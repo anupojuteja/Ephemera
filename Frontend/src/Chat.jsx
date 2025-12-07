@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import api from "./api";
 
 /*
- Chat center column:
- - If no room selected, show a friendly empty state
- - Otherwise show messages + input
- - Polls every 2s for new messages
+ Center chat column (WhatsApp style)
+ - header (name + last seen)
+ - messages area
+ - input fixed at bottom of column
 */
 
 export default function Chat({ me, room, otherUser }) {
@@ -16,22 +16,20 @@ export default function Chat({ me, room, otherUser }) {
   const scrollerRef = useRef(null);
 
   useEffect(() => {
-    if (!room) {
-      setMessages([]);
-      return;
-    }
+    if (!room) { setMessages([]); return; }
+    let mounted = true;
+
     async function load() {
       try {
         const msgs = await api.listMessages(room.id);
-        setMessages(msgs);
+        if (mounted) setMessages(msgs);
         setTimeout(()=> scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth"}), 60);
-      } catch (e) {
-        // fallback keep previous
-      }
+      } catch (e) {}
     }
+
     load();
     pollRef.current = setInterval(load, 2000);
-    return () => clearInterval(pollRef.current);
+    return () => { mounted=false; clearInterval(pollRef.current); };
   }, [room]);
 
   async function sendText(e) {
@@ -52,12 +50,15 @@ export default function Chat({ me, room, otherUser }) {
     setMessages(msgs);
   }
 
+  // empty state
   if (!room) {
     return (
-      <div className="h-full flex items-center justify-center text-center p-8">
-        <div>
-          <h2 className="text-2xl font-bold mb-2">Select a chat to start messaging</h2>
-          <p className="muted">Your conversations will appear here. Try selecting a user on the left or create a new chat.</p>
+      <div className="h-full flex flex-col">
+        <div className="h-full flex items-center justify-center text-center p-6 text-slate-500">
+          <div>
+            <div className="text-2xl font-semibold mb-2">Select a chat</div>
+            <div>Messages will appear here</div>
+          </div>
         </div>
       </div>
     );
@@ -65,41 +66,41 @@ export default function Chat({ me, room, otherUser }) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.03)] flex items-center gap-4">
-        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.username||"User")}&background=515BD4&color=fff`} alt="o" className="w-10 h-10 rounded-full" />
-        <div>
-          <div className="font-semibold">{otherUser?.username || "Chat"}</div>
-          <div className="muted small">Active now</div>
+      <div className="px-4 py-3 border-b flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">{(otherUser?.username||"U").slice(0,1).toUpperCase()}</div>
+        <div className="flex-1">
+          <div className="font-semibold">{otherUser?.username||"Chat"}</div>
+          <div className="text-xs text-slate-500">last seen recently</div>
         </div>
+        <div className="text-slate-500">⋯</div>
       </div>
 
-      <div ref={scrollerRef} className="flex-1 overflow-auto p-6 space-y-4 bg-[linear-gradient(180deg,rgba(255,255,255,0.00),rgba(255,255,255,0.01))]">
-        {messages.map((m) => {
+      <div ref={scrollerRef} className="flex-1 overflow-auto px-4 py-6 space-y-4 bg-[url('/bubble-bg.png')] bg-repeat" >
+        {messages.map(m=>{
           const mine = m.sender && m.sender.id === me.id;
           return (
-            <div key={m.id || Math.random()} className={`max-w-[70%] ${mine ? 'ml-auto text-right' : 'mr-auto text-left'}`}>
-              <div className={`inline-block p-3 rounded-2xl ${mine ? 'bubble-me' : 'bubble-other'} shadow-sm`}>
-                {m.text && <div className="mb-2">{m.text}</div>}
-                {m.image_url && <img src={m.image_url} alt="img" className="max-w-[300px] rounded-lg" />}
-                <div className="text-[11px] muted mt-2">{new Date(m.created_at).toLocaleTimeString()}</div>
+            <div key={m.id || Math.random()} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div className={`${mine ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-800'} px-4 py-2 rounded-xl max-w-[70%]`}>
+                {m.text && <div className="whitespace-pre-wrap">{m.text}</div>}
+                {m.image_url && <img src={m.image_url} className="mt-2 rounded-md max-w-full" alt="img" />}
+                <div className="text-[11px] text-slate-400 mt-1 text-right">{new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.01)]">
+      <div className="px-4 py-3 border-t bg-white">
         <form onSubmit={sendText} className="flex items-center gap-3">
-          <input className="flex-1 p-3 rounded-full bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)]" placeholder="Write a message" value={text} onChange={(e)=>setText(e.target.value)} />
-          <input type="file" accept="image/*" onChange={(e)=>setFile(e.target.files[0])} className="hidden" id="imgfile" />
-          <label htmlFor="imgfile" className="px-3 py-2 rounded-full bg-[rgba(255,255,255,0.03)] cursor-pointer">📎</label>
-          <button type="submit" className="px-4 py-2 rounded-full text-white" style={{background: "linear-gradient(90deg,#DD2A7B,#8134AF)"}}>Send</button>
+          <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Type a message" className="flex-1 p-3 rounded-full border" />
+          <input id="imgfile" type="file" accept="image/*" onChange={(e)=>setFile(e.target.files[0])} className="hidden" />
+          <label htmlFor="imgfile" className="px-3 py-2 bg-slate-100 rounded-full cursor-pointer">📎</label>
+          <button type="submit" className="px-4 py-2 bg-emerald-500 text-white rounded-full">Send</button>
         </form>
-
         {file && (
-          <form onSubmit={sendImage} className="mt-2 flex items-center gap-3">
-            <div className="text-sm muted">Image ready to upload: {file.name}</div>
-            <button type="submit" className="ml-auto px-3 py-1 rounded-lg bg-[rgba(255,255,255,0.03)]">Upload</button>
+          <form onSubmit={sendImage} className="mt-2 flex items-center gap-2">
+            <div className="text-sm text-slate-600">Ready to upload: {file.name}</div>
+            <button type="submit" className="ml-auto px-3 py-1 rounded-md border">Upload</button>
           </form>
         )}
       </div>

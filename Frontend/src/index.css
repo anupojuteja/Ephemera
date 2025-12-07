@@ -2,59 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette 3 variables */
-:root {
-  --sun-1: #F58529;
-  --sun-2: #DD2A7B;
-  --sun-3: #8134AF;
-  --sun-4: #515BD4;
-  --bg-dark: #0b0710;
-  --card: #0f0c14;
-  --muted: #a9a1ab;
+/* WhatsApp-like palette */
+:root{
+  --wa-green: #25D366;
+  --wa-bg: #f0f2f5;
 }
 
-/* basic global layout */
-html, body, #root {
-  height: 100%;
-  margin: 0;
-}
+html,body,#root{ height:100%; }
 
-/* header */
-.logo-badge{
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  background: linear-gradient(135deg,var(--sun-1), var(--sun-2), var(--sun-3));
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow: 0 6px 18px rgba(129,52,175,0.18);
-}
+.bg-wa-bg { background: var(--wa-bg); }
 
-/* avatar ring */
-.avatar-ring {
-  padding: 2px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg,var(--sun-2), var(--sun-3));
-}
+/* left sidebar */
+.col-span-3 { background: white; }
 
-/* bubble styles */
-.bubble-me {
-  background: linear-gradient(90deg,var(--sun-2), var(--sun-3));
-  color: white;
-  border-radius: 18px;
-}
-.bubble-other {
-  background: rgba(255,255,255,0.03);
-  color: #e6e1e6;
-  border-radius: 18px;
-}
+/* small helpers */
+.muted { color: #6b7280; }
 
-/* small typographic helpers */
-.muted { color: var(--muted); font-size: 0.95rem; }
-.small { font-size: 0.85rem; }
+/* message bubbles (overrides done inline too) */
 
-/* neon-ish shadow used on main card */
-.shadow-neon {
-  box-shadow: 0 10px 30px rgba(129,52,175,0.12);
-}
+/* rounded container */
+.rounded-2xl { border-radius: 14px; }
+
+/* slightly softer shadow */
+.shadow-lg { box-shadow: 0 8px 24px rgba(16,24,40,0.08); }

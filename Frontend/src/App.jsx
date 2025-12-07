@@ -3,73 +3,57 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Chat from "./Chat";
 import RightPanel from "./RightPanel";
-import Login from "./Login";           // <- static import (fixes require() error)
+import Login from "./Login";
 import api from "./api";
-import "./index.css";
 
 /*
-  App: top header + 3-column layout
-  - Sidebar: chat list
-  - Chat: center messages
-  - RightPanel: info, shared files
+  WhatsApp-like main app:
+  - fixed top header
+  - 3-column layout: contacts | chat | info
 */
 
 export default function App() {
   const [me, setMe] = useState(null);
-  const [activeRoom, setActiveRoom] = useState(null);
-  const [activeUser, setActiveUser] = useState(null);
+  const [active, setActive] = useState({ room: null, user: null });
 
   useEffect(() => {
     async function loadMe() {
-      // guard storage access — api.me() uses safe getters
       try {
-        const token = (typeof window !== "undefined" && window.localStorage) ? localStorage.getItem("access_token") : null;
-        if (token) {
-          const user = await api.me();
-          setMe(user);
-        }
+        const user = await api.me();
+        setMe(user);
       } catch (e) {
-        // not logged in or storage blocked
         setMe(null);
       }
     }
     loadMe();
   }, []);
 
-  // Called by Sidebar when a room is selected
-  function openRoom(room, otherUser) {
-    setActiveRoom(room);
-    setActiveUser(otherUser);
-  }
-
-  // If not logged in show the login (existing Login component)
   if (!me) {
     return (
-      <>
-        <Header />
+      <div className="min-h-screen bg-wa-bg text-slate-900">
+        <Header me={null} />
         <Login onLogin={(u) => setMe(u)} />
-      </>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen min-w-screen bg-gradient-to-b from-[#0b0710] to-[#0f0811] text-white">
-      <Header me={me} onLogout={() => { try { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); } catch(e){}; setMe(null); }} />
+    <div className="min-h-screen bg-wa-bg text-slate-900">
+      <Header me={me} onLogout={() => { try { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); } catch{}; setMe(null); }} />
 
-      <div className="max-w-screen-xl mx-auto px-6 py-6">
-        <div className="rounded-2xl bg-[rgba(255,255,255,0.02)] overflow-hidden shadow-neon border border-[rgba(255,255,255,0.04)]">
-          <div className="grid grid-cols-12 gap-0 h-[78vh]">
-            <div className="col-span-3 border-r border-[rgba(255,255,255,0.03)]">
-              <Sidebar me={me} onOpenRoom={openRoom} />
+      <div className="pt-16 max-w-[1200px] mx-auto">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg" style={{ height: "78vh" }}>
+          <div className="grid grid-cols-12 h-full">
+            <div className="col-span-3 border-r">
+              <Sidebar me={me} onOpen={(room, user)=>setActive({room,user})} />
             </div>
 
             <div className="col-span-6">
-              {/* center chat */}
-              <Chat me={me} room={activeRoom} otherUser={activeUser} />
+              <Chat me={me} room={active.room} otherUser={active.user} />
             </div>
 
-            <div className="col-span-3 border-l border-[rgba(255,255,255,0.03)]">
-              <RightPanel me={me} otherUser={activeUser} room={activeRoom} />
+            <div className="col-span-3 border-l bg-slate-50">
+              <RightPanel me={me} room={active.room} otherUser={active.user} />
             </div>
           </div>
         </div>
