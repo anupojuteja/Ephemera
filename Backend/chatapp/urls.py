@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import MeView, RegisterView, FriendRequestListCreateView, FriendRequestAcceptView, RoomWithUserView, MessagesListView, MessageSendView, VanishRoomView
+from .views import (
+    MeView, RegisterView, FriendRequestListCreateView, 
+    FriendRequestAcceptView, RoomWithUserView, MessagesListView, 
+    MessageSendView, VanishRoomView, AvatarUpdateView
+)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -7,6 +11,7 @@ urlpatterns = [
     path("auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", MeView.as_view(), name="me"),
+    path("user/avatar/", AvatarUpdateView.as_view(), name="avatar-update"),
 
     path("friends/", FriendRequestListCreateView.as_view(), name="friends"),
     path("friends/<int:pk>/accept/", FriendRequestAcceptView.as_view(), name="friend-accept"),

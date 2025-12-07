@@ -15,7 +15,26 @@ from datetime import timedelta
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(UserSerializer(request.user, context={"request": request}).data)
+
+class AvatarUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request):
+        file = request.FILES.get("avatar")
+        if not file:
+            return Response({"detail": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Ensure profile exists
+        if not hasattr(request.user, 'profile'):
+            from .models import Profile
+            Profile.objects.create(user=request.user)
+            
+        profile = request.user.profile
+        profile.avatar = file
+        profile.save()
+        
+        return Response(UserSerializer(request.user, context={"request": request}).data)
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]

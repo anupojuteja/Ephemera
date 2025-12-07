@@ -68,6 +68,19 @@ export default {
     return resp.data;
   },
 
+  async updateAvatar(file) {
+    const form = new FormData();
+    form.append("avatar", file);
+    // Explicit PUT to avatar endpoint
+    const resp = await request({
+      url: "/user/avatar/",
+      method: "put",
+      data: form,
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return resp.data;
+  },
+
   // Friends
   async friendList() {
     const resp = await request({ url: "/friends/", method: "get" });

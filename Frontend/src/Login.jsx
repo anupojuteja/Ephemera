@@ -21,14 +21,14 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-[rgba(255,255,255,0.02)] p-6 rounded-xl shadow-neon">
-        <h2 className="text-2xl font-bold mb-4" style={{background: "linear-gradient(90deg,#F58529,#DD2A7B)", WebkitBackgroundClip: "text", color: "transparent"}}>Welcome back</h2>
-        <p className="muted mb-4">Log in to continue to Ephemera</p>
+      <div className="max-w-md w-full card p-8 shadow-xl">
+        <h2 className="text-2xl font-bold mb-2 text-white">Welcome back</h2>
+        <p className="muted mb-6">Log in to continue to Ephemera</p>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input className="w-full p-3 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]" placeholder="username" value={username} onChange={(e)=>setUsername(e.target.value)} />
-          <input className="w-full p-3 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]" placeholder="password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
-          <button type="submit" className="w-full py-3 rounded-xl text-white" style={{background: "linear-gradient(90deg,#DD2A7B,#8134AF)"}}>Sign in</button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <button type="submit" className="w-full py-3 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">Sign in</button>
         </form>
 
         {err && <div className="text-red-400 mt-3">{err}</div>}

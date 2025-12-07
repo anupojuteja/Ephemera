@@ -2,63 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette 3 variables */
-:root{
-  --sun-1: #F58529;
-  --sun-2: #DD2A7B;
-  --sun-3: #8134AF;
-  --sun-4: #515BD4;
-  --bg-dark: #0b0710;
-  --card: #0f0c14;
-  --muted: #a9a1ab;
+/* Professional Theme Variables */
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --border: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
 }
 
 /* App-wide styles */
-html,body,#root{
-  height:100%;
-  background: linear-gradient(180deg, rgba(11,7,16,1) 0%, rgba(13,9,18,1) 100%);
-  color: #fff;
+html, body, #root {
+  height: 100%;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* header logo styles */
 .app-logo {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  font-weight:700;
-  letter-spacing: -0.5px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
-/* small gradient badge */
-.logo-badge{
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  background: linear-gradient(135deg,var(--sun-1), var(--sun-2), var(--sun-3));
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow: 0 6px 18px rgba(129,52,175,0.18);
+/* Minimal logo badge */
+.logo-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-/* profile avatar ring */
+/* Avatar ring */
 .avatar-ring {
   padding: 2px;
   border-radius: 9999px;
-  background: linear-gradient(135deg,var(--sun-2), var(--sun-3));
+  border: 2px solid var(--border);
 }
 
-/* chat bubble styles */
+/* Chat bubble styles */
 .bubble-me {
-  background: linear-gradient(90deg,var(--sun-2), var(--sun-3));
+  background-color: var(--primary);
   color: white;
 }
+
 .bubble-other {
-  background: rgba(255,255,255,0.04);
-  color: #e6e1e6;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
 }
 
-/* small utilities */
-.muted { color: var(--muted); font-size: 0.9rem; }
-.small { font-size: 0.85rem; }
+/* Utilities */
+.muted { color: var(--text-muted); font-size: 0.875rem; }
+.small { font-size: 0.75rem; }
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+}

@@ -7,19 +7,24 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Palette 3 – "Insta Sunset"
-        sunset: {
-          50:  "#fff5f7",
-          100: "#ffe4e8",
-          200: "#ffbfd1",
-          300: "#ff94b5",
-          400: "#ff5a8c",
-          500: "#ff2d6f",
-          600: "#e0155c",
-          700: "#b30f49",
-          800: "#800a34",
-          900: "#4d041f",
+        // Professional Palette (Slate + Indigo)
+        primary: {
+          50: "#eef2ff",
+          100: "#e0e7ff",
+          200: "#c7d2fe",
+          300: "#a5b4fc",
+          400: "#818cf8",
+          500: "#6366f1",
+          600: "#4f46e5",
+          700: "#4338ca",
+          800: "#3730a3",
+          900: "#312e81",
         },
+        slate: {
+          850: "#172033", // Custom deep slate
+          900: "#0f172a",
+          950: "#020617",
+        }
       },
     },
   },
